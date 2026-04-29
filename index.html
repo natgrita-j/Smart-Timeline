@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Timeline - Deadline Tracking Version</title>
+    <title>Pro Timeline & Resource Audit - Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -13,7 +13,7 @@
         .gantt-container { overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: white; }
         .gantt-grid-wrapper { display: inline-block; min-width: 100%; }
         .gantt-row { display: flex; width: max-content; }
-        .sticky-col { position: sticky; left: 0; background: white; z-index: 40; border-right: 2px solid #e5e7eb; width: 180px; min-width: 180px; padding: 0 12px; display: flex; align-items: center; font-size: 11px; height: 42px; transition: background 0.2s; }
+        .sticky-col { position: sticky; left: 0; background: white; z-index: 40; border-right: 2px solid #e5e7eb; width: 180px; min-width: 180px; padding: 0 12px; display: flex; align-items: center; font-size: 11px; height: 42px; }
         .day-grid { display: grid; grid-template-columns: repeat(365, 32px); }
         .day-cell { border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; height: 42px; width: 32px; display: flex; align-items: center; justify-content: center; font-size: 9px; position: relative; }
         .month-header-wrapper { display: flex; margin-left: 180px; }
@@ -22,12 +22,9 @@
         .holiday-cell { background-color: #fee2e2 !important; color: #ef4444; }
         .today-cell { background-color: rgba(44, 62, 80, 0.05); }
         .today-line { width: 2px; background: #2C3E50; height: 100%; position: absolute; left: 50%; z-index: 30; pointer-events: none; }
-        
-        /* Deadline Sign */
-        .deadline-sign { width: 4px; height: 70%; background-color: #EF4444; position: absolute; right: 0; z-index: 35; border-radius: 2px; box-shadow: 0 0 4px rgba(239, 68, 68, 0.5); }
+        .deadline-sign { width: 4px; height: 70%; background-color: #EF4444; position: absolute; right: 0; z-index: 35; border-radius: 2px; }
         .deadline-flag { font-size: 10px; position: absolute; top: -2px; right: -2px; z-index: 36; }
-
-        .task-bar { height: 18px; border-radius: 4px; margin: auto 0; z-index: 10; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .task-bar { height: 18px; border-radius: 4px; margin: auto 0; z-index: 10; position: relative; }
         .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); }
     </style>
 </head>
@@ -37,10 +34,10 @@
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-[#2C3E50]">Smart Timeline & Audit</h1>
-                <p class="text-gray-400 text-sm font-medium uppercase tracking-widest">Gantt Year 2026</p>
+                <p class="text-gray-400 text-sm">Roadmap 2026 - Fixed Version</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="scrollToToday()" class="bg-[#2C3E50] text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-700 transition shadow-lg">Current Day</button>
+            <div class="flex gap-2">
+                <button onclick="scrollToToday()" class="bg-[#2C3E50] text-white px-5 py-2 rounded-xl font-bold text-sm">Jump to Today</button>
             </div>
         </div>
     </header>
@@ -49,80 +46,77 @@
         
         <div class="xl:col-span-1 space-y-6">
             <section class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
-                <h2 class="font-bold mb-4 text-emerald-800 flex items-center gap-2">🛠 QA Suggester</h2>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white p-2 rounded-lg border">
+                <h2 class="font-bold mb-4 text-emerald-800 flex items-center gap-2 text-sm">🛠 QA Suggester</h2>
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-white p-2 rounded-lg border text-center">
                             <label class="block text-[9px] font-bold text-gray-400 uppercase">Dev Count</label>
-                            <input type="number" id="numDevs" value="1" min="1" class="w-full text-sm font-bold outline-none">
+                            <input type="number" id="numDevs" value="1" min="1" class="w-full text-center font-bold outline-none">
                         </div>
-                        <div class="bg-white p-2 rounded-lg border">
+                        <div class="bg-white p-2 rounded-lg border text-center">
                             <label class="block text-[9px] font-bold text-gray-400 uppercase">QA Count</label>
-                            <input type="number" id="numQAs" value="1" min="1" class="w-full text-sm font-bold outline-none">
+                            <input type="number" id="numQAs" value="1" min="1" class="w-full text-center font-bold outline-none">
                         </div>
                     </div>
-                    <button onclick="calculateAndSuggestQA()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-emerald-700 transition">Get QA Suggestion</button>
-                    <div id="qaResultBox" class="hidden p-3 bg-white rounded-xl border border-emerald-100 text-[11px] text-emerald-700 leading-relaxed italic">
+                    <button onclick="calculateAndSuggestQA()" class="w-full bg-emerald-600 text-white py-2 rounded-xl font-bold text-xs">Suggest QA Time</button>
+                    <div id="qaResultBox" class="hidden p-3 bg-white rounded-lg border border-emerald-100 text-[10px] text-emerald-700 italic">
                         <p id="qaResultText"></p>
                     </div>
                 </div>
             </section>
 
             <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 text-xs uppercase text-gray-400 tracking-widest">Global Setup</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-bold mb-1">Public Holidays</label>
-                        <textarea id="holidaysInput" oninput="saveHolidays()" placeholder="2026-05-01, 2026-05-04" class="w-full border p-3 rounded-xl text-xs h-20 outline-none focus:border-[#27AE60] bg-gray-50"></textarea>
+                <h2 id="formTitle" class="font-bold mb-4 text-[#2C3E50]">Add/Edit Task</h2>
+                <input type="hidden" id="editingId" value="">
+                <div class="space-y-3">
+                    <input type="text" id="taskName" placeholder="Task Name" class="w-full border p-2 rounded-xl text-sm outline-none">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="taskAssignee" class="border p-2 rounded-xl text-sm bg-gray-50"></select>
+                        <select id="taskRole" class="border p-2 rounded-xl text-sm bg-gray-50">
+                            <option value="BE">BE</option><option value="FE">FE</option><option value="QA">QA</option><option value="Design">Design</option><option value="Mobile">Mobile</option>
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold mb-1">Team Members</label>
-                        <div id="assigneeList" class="flex flex-wrap gap-1 mb-3"></div>
-                        <div class="flex gap-1">
-                            <input type="text" id="newAssignee" class="flex-1 border p-2 rounded-lg text-xs" placeholder="+ Member Name">
-                            <button onclick="addItem('assignees', 'newAssignee')" class="bg-primary text-white px-3 rounded-lg">+</button>
-                        </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="text-[9px] font-bold text-gray-400">START</label><input type="date" id="startDate" class="w-full border p-1 rounded text-xs"></div>
+                        <div><label class="text-[9px] font-bold text-gray-400">DEADLINE</label><input type="date" id="deadline" class="w-full border p-1 rounded text-xs"></div>
                     </div>
+                    <div class="bg-blue-50 p-2 rounded-lg"><label class="text-[9px] font-bold text-blue-400">MANDAYS</label><input type="number" id="mandays" placeholder="Days" class="w-full bg-transparent text-sm font-bold outline-none"></div>
+                    <select id="taskStatus" class="border p-2 rounded-xl text-sm w-full bg-gray-50"></select>
+                    <textarea id="taskNotes" placeholder="Notes..." class="w-full border p-2 rounded text-xs h-12 outline-none"></textarea>
+                    
+                    <div id="reasonSection" class="hidden p-2 bg-red-50 rounded-lg border border-red-200">
+                        <label class="text-[9px] text-red-500 font-bold uppercase">Reason for Timeline Change *</label>
+                        <textarea id="changeReason" placeholder="Why is this moving?" class="w-full bg-transparent text-xs outline-none h-12"></textarea>
+                    </div>
+
+                    <button onclick="handleTaskSubmit()" id="submitBtn" class="w-full bg-[#27AE60] text-white py-3 rounded-xl font-bold shadow-lg">Save Task</button>
+                    <button onclick="resetForm()" id="cancelBtn" class="w-full text-xs text-gray-400 mt-1 hidden">Cancel</button>
                 </div>
             </section>
 
             <section class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <h2 id="formTitle" class="font-bold mb-4 text-[#2C3E50]">Plan New Task</h2>
-                <input type="hidden" id="editingId" value="">
+                <h2 class="font-bold mb-3 text-xs uppercase text-gray-400">Settings</h2>
                 <div class="space-y-3">
-                    <input type="text" id="taskName" placeholder="Task Name" class="w-full border p-3 rounded-xl text-sm outline-none focus:ring-1 ring-[#27AE60]">
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="taskAssignee" class="border p-2 rounded-lg text-sm bg-gray-50"></select>
-                        <select id="taskRole" class="border p-2 rounded-lg text-sm bg-gray-50">
-                            <option value="Design">Design</option><option value="BE">BE</option><option value="FE">FE</option><option value="QA">QA</option><option value="Mobile">Mobile</option>
-                        </select>
+                    <div>
+                        <label class="text-[9px] font-bold text-gray-400">HOLIDAYS (Comma separated)</label>
+                        <textarea id="holidaysInput" oninput="saveHolidays()" placeholder="2026-05-01, 2026-05-04" class="w-full border p-2 rounded-xl text-xs h-16 bg-gray-50 outline-none"></textarea>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[9px] font-bold text-gray-400 uppercase">Start Date</label><input type="date" id="startDate" class="w-full border p-2 rounded-lg text-xs"></div>
-                        <div><label class="text-[9px] font-bold text-gray-400 uppercase">Deadline</label><input type="date" id="deadline" class="w-full border p-2 rounded-lg text-xs"></div>
+                    <div id="assigneeList" class="flex flex-wrap gap-1"></div>
+                    <div class="flex gap-1">
+                        <input type="text" id="newAssignee" class="flex-1 border p-1 rounded text-xs" placeholder="+ Name">
+                        <button onclick="addItem('assignees', 'newAssignee')" class="bg-primary text-white px-2 rounded">+</button>
                     </div>
-                    <div class="bg-blue-50 p-2 rounded-lg"><label class="text-[9px] font-bold text-blue-400 uppercase">Mandays</label><input type="number" id="mandays" placeholder="Days needed" class="w-full bg-transparent text-sm font-bold outline-none"></div>
-                    <select id="taskStatus" class="border p-3 rounded-xl text-sm w-full bg-gray-50"></select>
-                    <textarea id="taskNotes" placeholder="Context / Notes..." class="w-full border p-3 rounded-xl text-xs h-16 outline-none bg-gray-50"></textarea>
-                    
-                    <div id="reasonSection" class="hidden p-3 bg-red-50 rounded-xl border border-red-100">
-                        <label class="text-[9px] text-red-500 font-bold uppercase">Reason for Delay / Change</label>
-                        <textarea id="changeReason" placeholder="Audit log entry..." class="w-full bg-transparent text-xs outline-none mt-1"></textarea>
-                    </div>
-
-                    <button onclick="handleTaskSubmit()" id="submitBtn" class="w-full bg-[#27AE60] text-white py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition">Save Task</button>
-                    <button onclick="resetForm()" id="cancelBtn" class="w-full py-1 text-xs text-gray-400 hidden">Cancel Edit</button>
                 </div>
             </section>
         </div>
 
         <div class="xl:col-span-3 space-y-6">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="gantt-container" id="ganttContainer">
                     <div class="gantt-grid-wrapper">
                         <div id="ganttHeaderMonths" class="month-header-wrapper"></div>
                         <div class="gantt-row">
-                            <div class="sticky-col font-bold text-gray-300 uppercase tracking-tighter">Tasks / Timeline</div>
+                            <div class="sticky-col font-bold text-gray-300 uppercase">Tasks / Timeline</div>
                             <div id="ganttHeaderDays" class="day-grid"></div>
                         </div>
                         <div id="ganttRows"></div>
@@ -130,15 +124,15 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-[#2C3E50] text-white uppercase tracking-wider font-normal">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-xs">
+                <table class="w-full text-left">
+                    <thead class="bg-[#2C3E50] text-white">
                         <tr>
-                            <th class="p-4 w-10 text-center">Ord</th>
-                            <th class="p-4">Task / Assignee</th>
-                            <th class="p-4 text-center">Days</th>
-                            <th class="p-4">Dates</th>
-                            <th class="p-4 text-right">Actions</th>
+                            <th class="p-4 w-10 text-center">#</th>
+                            <th class="p-4">Task Detail</th>
+                            <th class="p-4 text-center">Mandays</th>
+                            <th class="p-4">Timeline</th>
+                            <th class="p-4 text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody id="taskBody" class="divide-y divide-gray-50"></tbody>
@@ -148,28 +142,34 @@
     </main>
 
     <div id="historyModal" class="modal flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl max-w-2xl w-full mx-4 shadow-2xl">
-            <div class="flex justify-between items-center mb-6"><h3 class="font-bold text-xl">Timeline Audit History</h3><button onclick="closeModal()" class="text-3xl text-gray-300 hover:text-red-500">&times;</button></div>
-            <div id="historyContent" class="space-y-4 max-h-[500px] overflow-y-auto pr-2"></div>
+        <div class="bg-white p-6 rounded-2xl max-w-xl w-full mx-4 shadow-2xl overflow-hidden">
+            <div class="flex justify-between items-center mb-4"><h3 class="font-bold">Audit History</h3><button onclick="closeModal()" class="text-2xl text-gray-300">&times;</button></div>
+            <div id="historyContent" class="space-y-3 max-h-96 overflow-y-auto"></div>
         </div>
     </div>
 
     <script>
         const year = 2026;
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        let assignees = JSON.parse(localStorage.getItem('assignees')) || ['FN', 'Por', 'NP', 'PM', 'Jino', 'Noy', 'KP', 'Muay'];
+        let assignees = JSON.parse(localStorage.getItem('assignees')) || ['FN', 'Por', 'NP', 'PM'];
         let holidays = JSON.parse(localStorage.getItem('holidays')) || [];
         let statuses = ['In Progress', 'Ongoing', 'Complete'];
 
         const yearDates = [];
-        let dDate = new Date(year, 0, 1);
-        while(dDate.getFullYear() === year) { yearDates.push(new Date(dDate)); dDate.setDate(dDate.getDate()+1); }
+        let d = new Date(year, 0, 1);
+        while(d.getFullYear() === year) { yearDates.push(new Date(d)); d.setDate(d.getDate()+1); }
 
-        function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); localStorage.setItem('assignees', JSON.stringify(assignees)); render(); }
-        function saveHolidays() {
-            holidays = document.getElementById('holidaysInput').value.split(',').map(x => x.trim()).filter(x => x);
+        function saveAll() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem('assignees', JSON.stringify(assignees));
             localStorage.setItem('holidays', JSON.stringify(holidays));
             render();
+        }
+
+        function saveHolidays() {
+            const hInput = document.getElementById('holidaysInput').value;
+            holidays = hInput.split(',').map(x => x.trim()).filter(x => x);
+            saveAll();
         }
 
         function calculateEndDate(start, mandays, hList) {
@@ -184,12 +184,12 @@
 
         function calculateAndSuggestQA() {
             const numQAs = parseInt(document.getElementById('numQAs').value) || 1;
-            const devMandays = tasks.filter(t => ['BE','FE','Mobile'].includes(t.role)).reduce((s,t) => s + (t.mandays||0), 0);
-            if(devMandays === 0) return alert("No dev tasks found to calculate.");
-            const suggestion = ((devMandays / numQAs) * 0.3).toFixed(1);
+            const devDays = tasks.filter(t => ['BE','FE','Mobile'].includes(t.role)).reduce((s,t) => s + (t.mandays||0), 0);
+            if(devDays === 0) return alert("No dev tasks found.");
+            const suggest = ((devDays / numQAs) * 0.3).toFixed(1);
             document.getElementById('qaResultBox').classList.remove('hidden');
-            document.getElementById('qaResultText').innerHTML = `Dev Days: <b>${devMandays}</b> | QAs: <b>${numQAs}</b><br>Suggested Test Period: <b>${suggestion} days</b> per QA.`;
-            document.getElementById('mandays').value = Math.ceil(suggestion);
+            document.getElementById('qaResultText').innerHTML = `Dev Days: <b>${devDays}</b> | QA: <b>${numQAs}</b><br>Suggested Test Period: <b>${suggest} days</b>`;
+            document.getElementById('mandays').value = Math.ceil(suggest);
             document.getElementById('taskRole').value = 'QA';
         }
 
@@ -205,32 +205,46 @@
                 deadline: document.getElementById('deadline').value,
                 status: document.getElementById('taskStatus').value,
                 notes: document.getElementById('taskNotes').value,
-                history: eid ? tasks.find(x => x.id === parseInt(eid)).history || [] : []
+                history: eid ? (tasks.find(x => x.id === parseInt(eid))?.history || []) : []
             };
 
+            if(!tData.name || !tData.start || !tData.mandays) return alert("กรุณากรอกข้อมูลให้ครบ (ชื่อ, วันเริ่ม, Mandays)");
+
+            // Validation for Editing
             if(eid) {
                 const old = tasks.find(x => x.id === parseInt(eid));
                 if(old.start !== tData.start || old.mandays !== tData.mandays || old.deadline !== tData.deadline) {
-                    const reason = document.getElementById('changeReason').value;
-                    if(!reason) { document.getElementById('reasonSection').classList.remove('hidden'); return alert("Audit Log: Reason required."); }
-                    tData.history.push({ time: new Date().toLocaleString(), msg: `Shift from ${old.start} to ${tData.start}`, reason });
+                    const reason = document.getElementById('changeReason').value.trim();
+                    if(!reason) {
+                        document.getElementById('reasonSection').classList.remove('hidden');
+                        alert("กรุณากรอกเหตุผลที่เลื่อน Timeline");
+                        return;
+                    }
+                    tData.history.push({ time: new Date().toLocaleString(), msg: `เลื่อนจาก ${old.start} เป็น ${tData.start}`, reason });
                 }
                 tasks[tasks.findIndex(x => x.id === parseInt(eid))] = tData;
-            } else { tasks.push(tData); }
-            resetForm(); save();
+            } else {
+                tasks.push(tData);
+            }
+            
+            resetForm();
+            saveAll();
         }
 
         function render() {
             const todayStr = new Date().toISOString().split('T')[0];
             document.getElementById('holidaysInput').value = holidays.join(', ');
+
+            // Sync Dropdowns
             const sync = (id, list) => document.getElementById(id).innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
             sync('taskAssignee', assignees); sync('taskStatus', statuses);
 
             document.getElementById('assigneeList').innerHTML = assignees.map((a,i) => `
-                <span class="bg-slate-50 text-[10px] px-2 py-1 rounded-lg border flex items-center gap-2 font-bold">${a} 
-                <button onclick="assignees.splice(${i},1);save()" class="text-red-300">×</button></span>`).join('');
+                <span class="bg-gray-100 text-[9px] px-2 py-1 rounded flex items-center gap-1">${a} 
+                <button onclick="assignees.splice(${i},1);saveAll()" class="text-red-400">×</button></span>`).join('');
 
-            const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+            // Build Charts Header
+            const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
             let mH = ''; let dH = ''; let curM = -1; let mDays = 0;
             yearDates.forEach((d, i) => {
                 const ds = d.toISOString().split('T')[0];
@@ -245,6 +259,7 @@
             document.getElementById('ganttHeaderMonths').innerHTML = mH;
             document.getElementById('ganttHeaderDays').innerHTML = dH;
 
+            // Build Rows
             const tBody = document.getElementById('taskBody');
             const gRows = document.getElementById('ganttRows');
             tBody.innerHTML = ''; gRows.innerHTML = '';
@@ -258,21 +273,21 @@
                     <tr class="${overdue?'bg-red-50':''}">
                         <td class="p-4 text-center font-bold text-gray-300">${idx+1}</td>
                         <td class="p-4"><b>${t.name}</b><br><span class="text-gray-400">${t.assignee} (${t.role})</span></td>
-                        <td class="p-4 text-center font-mono font-bold">${t.mandays}</td>
-                        <td class="p-4 text-xs font-medium">${t.start} <br> <span class="${overdue?'text-red-500':'text-gray-400'}">End: ${endS}</span></td>
+                        <td class="p-4 text-center font-bold text-gray-600">${t.mandays}</td>
+                        <td class="p-4 text-[10px] leading-tight">${t.start}<br><span class="${overdue?'text-red-500 font-bold':''}">End: ${endS}</span></td>
                         <td class="p-4 text-right">
-                            <button onclick="showHistory(${t.id})" class="text-emerald-500 font-bold mr-3">Logs</button>
-                            <button onclick="editTask(${t.id})" class="text-blue-500 mr-3">Edit</button>
-                            <button onclick="tasks.splice(${idx},1);save()" class="text-red-200 hover:text-red-500">Del</button>
+                            <button onclick="showHistory(${t.id})" class="text-emerald-500 font-bold mr-2 underline">Logs</button>
+                            <button onclick="editTask(${t.id})" class="text-blue-500 mr-2">Edit</button>
+                            <button onclick="tasks.splice(${idx},1);saveAll()" class="text-red-200 hover:text-red-500">Del</button>
                         </td>
                     </tr>`;
 
-                let rowH = `<div class="gantt-row group"><div class="sticky-col font-bold text-gray-500 group-hover:bg-slate-50">${t.name}</div><div class="day-grid">`;
+                let rowH = `<div class="gantt-row group"><div class="sticky-col font-bold text-gray-500 group-hover:bg-slate-50 border-b">${t.name}</div><div class="day-grid">`;
                 yearDates.forEach(d => {
                     const ds = d.toISOString().split('T')[0];
                     const isTask = ds >= t.start && ds <= endS;
                     const isDeadline = ds === t.deadline;
-                    rowH += `<div class="day-cell ${d.getDay()===0||d.getDay()===6?'weekend':''} ${holidays.includes(ds)?'holiday-cell':''} ${ds===todayStr?'today-cell':''}" title="${ds}">
+                    rowH += `<div class="day-cell ${d.getDay()===0||d.getDay()===6?'weekend':''} ${holidays.includes(ds)?'holiday-cell':''} ${ds===todayStr?'today-cell':''}">
                         ${isTask ? `<div class="w-full ${overdue?'bg-red-300':'bg-accent'} task-bar"></div>` : ''}
                         ${isDeadline ? `<div class="deadline-sign"></div><div class="deadline-flag">🚩</div>` : ''}
                     </div>`;
@@ -288,34 +303,48 @@
             document.getElementById('taskAssignee').value = t.assignee;
             document.getElementById('taskRole').value = t.role;
             document.getElementById('startDate').value = t.start;
-            document.getElementById('deadline').value = t.deadline || '';
             document.getElementById('mandays').value = t.mandays;
+            document.getElementById('deadline').value = t.deadline || '';
             document.getElementById('taskStatus').value = t.status;
             document.getElementById('taskNotes').value = t.notes || '';
-            document.getElementById('submitBtn').innerText = "Update Entry";
+            
+            document.getElementById('submitBtn').innerText = "Update Task";
             document.getElementById('cancelBtn').classList.remove('hidden');
             document.getElementById('reasonSection').classList.add('hidden');
+        }
+
+        function resetForm() {
+            document.getElementById('editingId').value = "";
+            document.getElementById('taskName').value = "";
+            document.getElementById('mandays').value = "";
+            document.getElementById('startDate').value = "";
+            document.getElementById('deadline').value = "";
+            document.getElementById('taskNotes').value = "";
             document.getElementById('changeReason').value = "";
+            document.getElementById('submitBtn').innerText = "Save Task";
+            document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('reasonSection').classList.add('hidden');
+        }
+
+        function addItem(type, id) {
+            const v = document.getElementById(id).value.trim();
+            if(v) { assignees.push(v); document.getElementById(id).value = ''; saveAll(); }
         }
 
         function showHistory(id) {
             const t = tasks.find(x => x.id === id);
             const content = document.getElementById('historyContent');
             content.innerHTML = (t.history || []).map(h => `
-                <div class="p-4 bg-slate-50 rounded-2xl border-l-4 border-emerald-500">
-                    <div class="text-[10px] font-bold text-gray-400 uppercase mb-1">${h.time}</div>
-                    <div class="text-xs text-gray-600 mb-2">${h.msg}</div>
-                    <div class="text-sm italic font-medium">"${h.reason}"</div>
-                </div>`).join('') || "No audit records found.";
+                <div class="p-3 bg-slate-50 rounded-xl border-l-4 border-emerald-500 text-[11px]">
+                    <div class="font-bold text-gray-400 mb-1">${h.time}</div>
+                    <div>${h.msg}</div>
+                    <div class="italic text-emerald-700 mt-1">"เหตุผล: ${h.reason}"</div>
+                </div>`).join('') || "<p class='text-center text-gray-400 py-4'>ไม่มีประวัติการแก้ไข</p>";
             document.getElementById('historyModal').style.display = 'flex';
         }
-        function addItem(type, id) {
-            const v = document.getElementById(id).value.trim();
-            if(v) { assignees.push(v); document.getElementById(id).value=''; save(); }
-        }
-        function resetForm() { document.getElementById('editingId').value=""; document.getElementById('formTitle').innerText="Plan New Task"; document.getElementById('submitBtn').innerText="Save Task"; document.getElementById('cancelBtn').classList.add('hidden'); document.getElementById('reasonSection').classList.add('hidden'); }
         function closeModal() { document.getElementById('historyModal').style.display = 'none'; }
         function scrollToToday() { const el = document.querySelector('.today-cell'); if(el) el.scrollIntoView({ behavior: 'smooth', inline: 'center' }); }
+
         window.onload = () => { render(); setTimeout(scrollToToday, 500); };
     </script>
 </body>
