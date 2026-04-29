@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Timeline & Resource Manager</title>
+    <title>Advanced Timeline & Resource Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -12,33 +12,30 @@
         .text-primary { color: #2C3E50; }
         .bg-accent { background-color: #27AE60; }
         .border-accent { border-color: #27AE60; }
-        .gantt-grid { display: grid; grid-template-columns: repeat(30, minmax(40px, 1fr)); overflow-x: auto; }
-        .day-cell { border: 1px solid #e5e7eb; height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-        .weekend { background-color: #f3f4f6; color: #9ca3af; }
-        .holiday { background-color: #fee2e2; color: #ef4444; }
+        .gantt-grid { display: grid; grid-template-columns: repeat(31, minmax(35px, 1fr)); overflow-x: auto; position: relative; }
+        .day-cell { border: 1px solid #e5e7eb; height: 35px; min-width: 35px; display: flex; align-items: center; justify-content: center; font-size: 9px; position: relative; }
+        .weekend { background-color: #f1f5f9; color: #94a3b8; }
+        .holiday-cell { background-color: #fee2e2 !important; color: #ef4444; }
+        .today-cell { border: 2px solid #2C3E50 !important; z-index: 10; background-color: rgba(44, 62, 80, 0.05); }
+        .today-marker { width: 2px; background: #2C3E50; height: 100%; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; }
+        .task-bar { height: 18px; border-radius: 4px; margin: 2px 0; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <header class="max-w-7xl mx-auto mb-8 bg-white p-6 rounded-xl shadow-sm border-l-4 border-accent">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-primary">Smart Timeline Manager</h1>
-                <p class="text-gray-500 text-sm">Product Owner Resource Allocation Tool</p>
+                <p class="text-gray-500 text-sm">Efficient Resource Allocation & Gantt Planning</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <select id="filterRole" class="border p-2 rounded-lg text-sm bg-gray-50 outline-none">
+                <select id="filterRole" class="border p-2 rounded-lg text-sm bg-gray-50">
                     <option value="">All Roles</option>
-                    <option value="BE">BE</option>
-                    <option value="FE">FE</option>
-                    <option value="QA">QA</option>
-                    <option value="Design">Design</option>
-                    <option value="Mobile">Mobile</option>
+                    <option value="BE">BE</option><option value="FE">FE</option><option value="QA">QA</option><option value="Design">Design</option><option value="Mobile">Mobile</option>
                 </select>
-                <select id="filterStatus" class="border p-2 rounded-lg text-sm bg-gray-50 outline-none">
-                    <option value="">All Status</option>
-                </select>
-                <input type="text" id="filterAssignee" placeholder="Filter Assignee..." class="border p-2 rounded-lg text-sm bg-gray-50 outline-none">
+                <select id="filterStatus" class="border p-2 rounded-lg text-sm bg-gray-50"><option value="">All Status</option></select>
+                <select id="filterAssignee" class="border p-2 rounded-lg text-sm bg-gray-50"><option value="">All Assignees</option></select>
             </div>
         </div>
     </header>
@@ -47,257 +44,235 @@
         
         <div class="lg:col-span-1 space-y-6">
             <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 flex items-center gap-2">Settings</h2>
+                <h2 class="font-bold mb-4 text-sm uppercase text-gray-400">Settings & Resources</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold uppercase mb-1 text-gray-400">Public Holidays (YYYY-MM-DD)</label>
-                        <textarea id="holidaysInput" placeholder="2026-04-13, 2026-04-14" class="w-full border p-2 rounded-lg text-sm h-20 outline-none focus:border-accent"></textarea>
+                        <label class="block text-xs font-semibold mb-1">Public Holidays (Comma separated)</label>
+                        <textarea id="holidaysInput" placeholder="2026-04-13, 2026-05-01" class="w-full border p-2 rounded-lg text-xs h-16 outline-none focus:border-accent"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold uppercase mb-1 text-gray-400">Number of QAs in Team</label>
-                        <input type="number" id="numQAs" value="1" min="1" class="w-full border p-2 rounded-lg text-sm outline-none">
+                        <label class="block text-xs font-semibold mb-1">Manage Assignees</label>
+                        <div class="flex gap-1 mb-2">
+                            <input type="text" id="newAssignee" class="flex-1 border p-1 rounded text-xs" placeholder="Name">
+                            <button onclick="addItem('assignees', 'newAssignee')" class="bg-primary text-white px-2 rounded text-xs">+</button>
+                        </div>
+                        <div id="assigneeList" class="flex flex-wrap gap-1"></div>
                     </div>
-                    <div id="qaSuggestionBox" class="bg-green-50 p-3 rounded-lg border border-green-100 hidden text-xs">
-                        <span class="font-bold text-green-700">QA Suggestion:</span>
-                        <p id="qaSuggestionText" class="text-green-600 mt-1"></p>
+                    <div>
+                        <label class="block text-xs font-semibold mb-1">Manage Status</label>
+                        <div class="flex gap-1 mb-2">
+                            <input type="text" id="newStatus" class="flex-1 border p-1 rounded text-xs" placeholder="Status">
+                            <button onclick="addItem('statuses', 'newStatus')" class="bg-primary text-white px-2 rounded text-xs">+</button>
+                        </div>
+                        <div id="statusList" class="flex flex-wrap gap-1"></div>
                     </div>
                 </div>
             </section>
 
             <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 text-primary">Add New Task</h2>
+                <h2 class="font-bold mb-4 text-primary">New Task</h2>
                 <div class="space-y-3">
-                    <input type="text" id="taskName" placeholder="Task Name" class="w-full border p-2 rounded-lg text-sm outline-none focus:border-accent">
+                    <input type="text" id="taskName" placeholder="Task Name" class="w-full border p-2 rounded-lg text-sm outline-none">
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="text" id="assignee" placeholder="Assignee" class="border p-2 rounded-lg text-sm outline-none">
-                        <select id="role" class="border p-2 rounded-lg text-sm outline-none">
-                            <option value="BE">BE</option>
-                            <option value="FE">FE</option>
-                            <option value="QA">QA</option>
-                            <option value="Design">Design</option>
-                            <option value="Mobile">Mobile</option>
+                        <select id="taskAssignee" class="border p-2 rounded-lg text-sm outline-none"></select>
+                        <select id="taskRole" class="border p-2 rounded-lg text-sm outline-none">
+                            <option value="BE">BE</option><option value="FE">FE</option><option value="QA">QA</option><option value="Design">Design</option><option value="Mobile">Mobile</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="text-[10px] text-gray-400 uppercase">Start Date</label>
-                            <input type="date" id="startDate" class="w-full border p-2 rounded-lg text-sm outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-400 uppercase">Deadline</label>
-                            <input type="date" id="deadline" class="w-full border p-2 rounded-lg text-sm outline-none">
-                        </div>
+                        <input type="date" id="startDate" class="border p-2 rounded-lg text-sm">
+                        <input type="date" id="deadline" class="border p-2 rounded-lg text-sm">
                     </div>
-                    <input type="number" id="mandays" placeholder="Mandays" class="w-full border p-2 rounded-lg text-sm outline-none">
-                    <select id="status" class="w-full border p-2 rounded-lg text-sm outline-none">
-                        <option value="In Progress">In Progress</option>
-                        <option value="Ongoing">Ongoing</option>
-                        <option value="Complete">Complete</option>
-                    </select>
-                    <button onclick="addTask()" class="w-full bg-accent text-white py-2 rounded-lg font-semibold hover:bg-opacity-90 transition shadow-md">Add Task</button>
+                    <input type="number" id="mandays" placeholder="Mandays" class="w-full border p-2 rounded-lg text-sm">
+                    <select id="taskStatus" class="w-full border p-2 rounded-lg text-sm outline-none"></select>
+                    <button onclick="addTask()" class="w-full bg-accent text-white py-2 rounded-lg font-semibold shadow-md">Add Task</button>
                 </div>
             </section>
         </div>
 
         <div class="lg:col-span-3 space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-primary text-white">
-                            <tr>
-                                <th class="p-4 font-normal">Task / Assignee</th>
-                                <th class="p-4 font-normal text-center">Dates</th>
-                                <th class="p-4 font-normal text-center">Mandays</th>
-                                <th class="p-4 font-normal text-center">Status</th>
-                                <th class="p-4 font-normal text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="taskBody" class="divide-y divide-gray-100">
-                            </tbody>
-                    </table>
-                </div>
+            <div id="qaSuggestionBox" class="bg-green-50 p-4 rounded-xl border border-green-100 hidden">
+                <p id="qaSuggestionText" class="text-green-700 text-sm font-medium"></p>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 text-primary">Gantt Chart (Next 30 Days)</h2>
-                <div id="ganttHeader" class="gantt-grid mb-2"></div>
-                <div id="ganttChart" class="space-y-2">
-                    </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-primary text-white">
+                        <tr>
+                            <th class="p-4">Task / Assignee</th>
+                            <th class="p-4">Timeline</th>
+                            <th class="p-4 text-center">Days</th>
+                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskBody" class="divide-y divide-gray-100"></tbody>
+                </table>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+                <h2 class="font-bold mb-4 text-primary flex items-center gap-2">
+                    Gantt Chart 
+                    <span class="text-[10px] font-normal text-gray-400"> (Blue marker = Today, Red cells = Holiday)</span>
+                </h2>
+                <div id="ganttHeader" class="gantt-grid mb-1"></div>
+                <div id="ganttChart" class="space-y-1"></div>
             </div>
         </div>
     </main>
 
     <script>
+        // Data Persistence Initialization
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        let statuses = ['In Progress', 'Ongoing', 'Complete'];
+        let assignees = JSON.parse(localStorage.getItem('assignees')) || ['Default User'];
+        let statuses = JSON.parse(localStorage.getItem('statuses')) || ['In Progress', 'Ongoing', 'Complete'];
+        let holidays = JSON.parse(localStorage.getItem('holidays')) || [];
 
-        // Core Formula: QA Suggestion
-        // $$Suggested QA Days = \frac{\text{Total Dev Mandays}}{\text{Number of QAs}} \times 0.3$$
-
-        function updateStorage() {
+        function saveAndRender() {
             localStorage.setItem('tasks', JSON.stringify(tasks));
+            localStorage.setItem('assignees', JSON.stringify(assignees));
+            localStorage.setItem('statuses', JSON.stringify(statuses));
+            localStorage.setItem('holidays', JSON.stringify(holidays));
             render();
         }
 
-        function getHolidays() {
-            const input = document.getElementById('holidaysInput').value;
-            return input.split(',').map(d => d.trim());
+        function addItem(type, inputId) {
+            const val = document.getElementById(inputId).value.trim();
+            if(!val) return;
+            if(type === 'assignees') assignees.push(val);
+            else statuses.push(val);
+            document.getElementById(inputId).value = '';
+            saveAndRender();
         }
 
-        function isWorkingDay(date, holidays) {
+        function removeItem(type, index) {
+            if(type === 'assignees') assignees.splice(index, 1);
+            else statuses.splice(index, 1);
+            saveAndRender();
+        }
+
+        function isWorkingDay(date, holidayList) {
             const day = date.getDay();
             const dateStr = date.toISOString().split('T')[0];
-            return day !== 0 && day !== 6 && !holidays.includes(dateStr);
+            return day !== 0 && day !== 6 && !holidayList.includes(dateStr);
         }
 
-        function calculateEndDate(startDateStr, mandays, holidays) {
-            let date = new Date(startDateStr);
+        function calculateEndDate(startStr, mandays, holidayList) {
+            let date = new Date(startStr);
             let count = 0;
             while (count < mandays) {
-                if (isWorkingDay(date, holidays)) {
-                    count++;
-                }
+                if (isWorkingDay(date, holidayList)) count++;
                 if (count < mandays) date.setDate(date.getDate() + 1);
             }
             return date;
         }
 
         function addTask() {
-            const task = {
+            const t = {
                 id: Date.now(),
                 name: document.getElementById('taskName').value,
-                assignee: document.getElementById('assignee').value,
-                role: document.getElementById('role').value,
+                assignee: document.getElementById('taskAssignee').value,
+                role: document.getElementById('taskRole').value,
                 start: document.getElementById('startDate').value,
                 mandays: parseInt(document.getElementById('mandays').value),
                 deadline: document.getElementById('deadline').value,
-                status: document.getElementById('status').value
+                status: document.getElementById('taskStatus').value
             };
-
-            if (!task.name || !task.start || !task.mandays) return alert('กรุณากรอกข้อมูลสำคัญให้ครบ');
-            
-            tasks.push(task);
-            updateStorage();
-        }
-
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            updateStorage();
-        }
-
-        function checkResourceOverlap(assignee, start, end) {
-            const overlapCount = tasks.filter(t => {
-                const holidays = getHolidays();
-                const tEnd = calculateEndDate(t.start, t.mandays, holidays);
-                return t.assignee === assignee && 
-                       new Date(start) <= tEnd && 
-                       new Date(end) >= new Date(t.start);
-            }).length;
-            return overlapCount > 1;
+            if(!t.name || !t.start || !t.mandays) return alert('กรุณาระบุข้อมูลให้ครบ');
+            tasks.push(t);
+            saveAndRender();
         }
 
         function render() {
-            const holidays = getHolidays();
-            const filterRole = document.getElementById('filterRole').value;
-            const filterAssignee = document.getElementById('filterAssignee').value.toLowerCase();
-            const numQAs = parseInt(document.getElementById('numQAs').value) || 1;
-
-            const filteredTasks = tasks.filter(t => 
-                (filterRole === "" || t.role === filterRole) &&
-                (t.assignee.toLowerCase().includes(filterAssignee))
-            );
-
-            // Calculate QA Suggestion
-            const devMandays = tasks.filter(t => ['BE', 'FE', 'Mobile'].includes(t.role))
-                                    .reduce((sum, t) => sum + t.mandays, 0);
-            const suggestedQA = ((devMandays / numQAs) * 0.3).toFixed(1);
+            const hInput = document.getElementById('holidaysInput').value;
+            holidays = hInput.split(',').map(d => d.trim()).filter(d => d);
             
-            if(devMandays > 0) {
+            // Sync Dropdowns
+            const syncSelect = (id, list) => {
+                const el = document.getElementById(id);
+                const current = el.value;
+                el.innerHTML = list.map(item => `<option value="${item}">${item}</option>`).join('');
+                if(list.includes(current)) el.value = current;
+            };
+            syncSelect('taskAssignee', assignees);
+            syncSelect('taskStatus', statuses);
+            syncSelect('filterStatus', ["", ...statuses]);
+            syncSelect('filterAssignee', ["", ...assignees]);
+
+            // Settings Tags
+            const renderTags = (id, list, type) => {
+                document.getElementById(id).innerHTML = list.map((item, i) => `
+                    <span class="bg-gray-100 text-[10px] px-2 py-1 rounded flex items-center gap-1">
+                        ${item} <button onclick="removeItem('${type}', ${i})" class="text-red-400">×</button>
+                    </span>
+                `).join('');
+            };
+            renderTags('assigneeList', assignees, 'assignees');
+            renderTags('statusList', statuses, 'statuses');
+
+            // Logic: QA Suggestion
+            const devDays = tasks.filter(t => ['BE', 'FE', 'Mobile'].includes(t.role)).reduce((s, t) => s + t.mandays, 0);
+            if(devDays > 0) {
                 document.getElementById('qaSuggestionBox').classList.remove('hidden');
-                document.getElementById('qaSuggestionText').innerText = `Based on ${devMandays} Dev mandays, you should allocate approx ${suggestedQA} days for testing.`;
+                document.getElementById('qaSuggestionText').innerText = `💡 Suggestion: With ${devDays} Dev mandays, plan for approx ${(devDays * 0.3).toFixed(1)} QA days.`;
             }
 
+            // Tables & Gantt
             const taskBody = document.getElementById('taskBody');
-            taskBody.innerHTML = '';
-
             const ganttChart = document.getElementById('ganttChart');
-            ganttChart.innerHTML = '';
+            const ganttHeader = document.getElementById('ganttHeader');
+            taskBody.innerHTML = ''; ganttChart.innerHTML = ''; ganttHeader.innerHTML = '';
 
-            filteredTasks.forEach(t => {
+            const today = new Date().toISOString().split('T')[0];
+            const viewStart = new Date(); viewStart.setDate(viewStart.getDate() - 5);
+
+            // Header Render
+            for(let i=0; i<31; i++) {
+                const d = new Date(viewStart); d.setDate(d.getDate() + i);
+                const dStr = d.toISOString().split('T')[0];
+                const isWE = d.getDay() === 0 || d.getDay() === 6;
+                const isHoliday = holidays.includes(dStr);
+                const isToday = dStr === today;
+                ganttHeader.innerHTML += `
+                    <div class="day-cell ${isWE ? 'weekend' : ''} ${isHoliday ? 'holiday-cell' : ''} ${isToday ? 'today-cell' : ''}">
+                        ${isToday ? '<div class="today-marker"></div>' : ''}
+                        ${d.getDate()}/${d.getMonth()+1}
+                    </div>`;
+            }
+
+            tasks.forEach(t => {
                 const end = calculateEndDate(t.start, t.mandays, holidays);
-                const isOverdue = t.deadline && end > new Date(t.deadline);
-                const isOverloaded = checkResourceOverlap(t.assignee, t.start, end.toISOString().split('T')[0]);
+                const endStr = end.toISOString().split('T')[0];
+                const isOverdue = t.deadline && endStr > t.deadline;
 
                 taskBody.innerHTML += `
                     <tr class="${isOverdue ? 'bg-red-50' : ''}">
-                        <td class="p-4">
-                            <div class="font-semibold text-primary">${t.name}</div>
-                            <div class="text-xs text-gray-400 flex items-center gap-1">
-                                [${t.role}] ${t.assignee} 
-                                ${isOverloaded ? '<span class="text-orange-500 font-bold" title="Workload Overlap">⚠️</span>' : ''}
-                            </div>
-                        </td>
-                        <td class="p-4 text-center text-xs">
-                            ${t.start} <br/> ถึง ${end.toISOString().split('T')[0]}
-                        </td>
-                        <td class="p-4 text-center font-mono font-bold">${t.mandays}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-2 py-1 rounded-full text-[10px] ${t.status === 'Complete' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
-                                ${t.status}
-                            </span>
-                        </td>
-                        <td class="p-4 text-right">
-                            <button onclick="deleteTask(${t.id})" class="text-red-400 hover:text-red-600">Delete</button>
-                        </td>
+                        <td class="p-4 font-semibold">${t.name}<br><span class="text-gray-400 font-normal">${t.assignee} (${t.role})</span></td>
+                        <td class="p-4">${t.start} <br> ${endStr}</td>
+                        <td class="p-4 text-center font-bold">${t.mandays}</td>
+                        <td class="p-4 text-center"><span class="bg-gray-100 p-1 rounded-lg">${t.status}</span></td>
+                        <td class="p-4 text-right"><button onclick="tasks=tasks.filter(x=>x.id!==${t.id});saveAndRender()" class="text-red-400">Delete</button></td>
                     </tr>
                 `;
 
-                // Gantt Bar Calculation
-                const startDate = new Date();
-                startDate.setDate(startDate.getDate() - 2); // Show from 2 days ago
-                const barStartDiff = Math.ceil((new Date(t.start) - startDate) / (1000 * 60 * 60 * 24));
-                
-                let barHtml = `<div class="gantt-grid h-8">`;
-                for(let i=0; i<30; i++) {
-                    const currentCellDate = new Date(startDate);
-                    currentCellDate.setDate(currentCellDate.getDate() + i);
-                    const cellDateStr = currentCellDate.toISOString().split('T')[0];
-                    const isTaskDay = cellDateStr >= t.start && cellDateStr <= end.toISOString().split('T')[0];
-                    const cellColor = isTaskDay ? (isOverdue ? 'bg-red-400' : 'bg-accent') : '';
-                    barHtml += `<div class="day-cell ${cellColor} opacity-75"></div>`;
+                // Gantt Bar Row
+                let rowHtml = `<div class="gantt-grid">`;
+                for(let i=0; i<31; i++) {
+                    const d = new Date(viewStart); d.setDate(d.getDate() + i);
+                    const dStr = d.toISOString().split('T')[0];
+                    const isTaskDay = dStr >= t.start && dStr <= endStr;
+                    const isToday = dStr === today;
+                    rowHtml += `
+                        <div class="day-cell ${isToday ? 'today-cell' : ''} ${holidays.includes(dStr) ? 'holiday-cell' : ''}">
+                            ${isTaskDay ? `<div class="w-full ${isOverdue ? 'bg-red-400' : 'bg-accent'} task-bar"></div>` : ''}
+                        </div>`;
                 }
-                barHtml += `</div>`;
-                ganttChart.innerHTML += `
-                    <div class="text-[10px] font-bold text-gray-400 mb-1">${t.name}</div>
-                    ${barHtml}
-                `;
+                rowHtml += `</div>`;
+                ganttChart.innerHTML += `<div class="text-[9px] text-gray-500 font-medium truncate w-32">${t.name}</div>${rowHtml}`;
             });
-
-            // Status Filter setup (Initial)
-            const statusFilter = document.getElementById('filterStatus');
-            if (statusFilter.options.length <= 1) {
-                statuses.forEach(s => statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
-            }
         }
 
-        // Initialize Gantt Header
-        const ganttHeader = document.getElementById('ganttHeader');
-        const startHeaderDate = new Date();
-        startHeaderDate.setDate(startHeaderDate.getDate() - 2);
-        for(let i=0; i<30; i++) {
-            const d = new Date(startHeaderDate);
-            d.setDate(d.getDate() + i);
-            const isWE = d.getDay() === 0 || d.getDay() === 6;
-            ganttHeader.innerHTML += `<div class="day-cell ${isWE ? 'weekend' : ''}">${d.getDate()}/${d.getMonth()+1}</div>`;
-        }
-
-        // Event Listeners
         document.getElementById('filterRole').addEventListener('change', render);
-        document.getElementById('filterStatus').addEventListener('change', render);
-        document.getElementById('filterAssignee').addEventListener('input', render);
-        document.getElementById('holidaysInput').addEventListener('input', render);
-        document.getElementById('numQAs').addEventListener('input', render);
-
         render();
     </script>
 </body>
