@@ -3,74 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Timeline & Resource Manager</title>
+    <title>Pro Timeline Manager with Change Tracking</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', 'Prompt', sans-serif; background-color: #F8F9FA; color: #2C3E50; }
         .bg-primary { background-color: #2C3E50; }
         .bg-accent { background-color: #27AE60; }
-        .gantt-grid { display: grid; grid-template-columns: repeat(31, minmax(35px, 1fr)); overflow-x: auto; position: relative; }
-        .day-cell { border: 1px solid #e5e7eb; height: 38px; min-width: 35px; display: flex; align-items: center; justify-content: center; font-size: 9px; position: relative; }
-        .weekend { background-color: #f1f5f9; color: #94a3b8; }
-        .holiday-cell { background-color: #fee2e2 !important; color: #ef4444; }
-        .today-cell { border: 2px solid #2C3E50 !important; z-index: 10; background-color: rgba(44, 62, 80, 0.05); }
-        .today-marker { width: 2px; background: #2C3E50; height: 100%; position: absolute; left: 50%; transform: translateX(-50%); z-index: 20; }
-        .task-bar { height: 18px; border-radius: 4px; margin: 2px 0; transition: all 0.2s; }
-        .btn-icon { padding: 2px 6px; border-radius: 4px; transition: background 0.2s; }
+        .gantt-container { overflow-x: auto; position: relative; border: 1px solid #e5e7eb; border-radius: 8px; background: white; }
+        .gantt-grid { display: grid; position: relative; width: max-content; }
+        .day-cell { border-right: 1px solid #f1f5f9; height: 34px; min-width: 28px; display: flex; align-items: center; justify-content: center; font-size: 8px; position: relative; }
+        .month-header { border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; background: #f8fafc; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; height: 30px; }
+        .weekend { background-color: #f8fafc; color: #cbd5e1; }
+        .holiday-cell { background-color: #fee2e2 !important; }
+        .today-cell { background-color: rgba(44, 62, 80, 0.05); }
+        .today-line { width: 2px; background: #2C3E50; height: 100%; position: absolute; left: 50%; z-index: 30; pointer-events: none; }
+        .task-bar { height: 14px; border-radius: 3px; margin: 2px 0; z-index: 10; position: relative; min-width: 4px; }
+        .sticky-col { position: sticky; left: 0; background: white; z-index: 40; border-right: 2px solid #e5e7eb; width: 160px; min-width: 160px; padding: 0 8px; display: flex; align-items: center; font-size: 10px; }
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <header class="max-w-7xl mx-auto mb-8 bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#27AE60]">
+    <header class="max-w-[1600px] mx-auto mb-6 bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#27AE60]">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-[#2C3E50]">Smart Timeline Manager</h1>
-                <p class="text-gray-500 text-sm">Product Owner's Toolkit: Resource & QA Allocation</p>
+                <h1 class="text-2xl font-bold text-[#2C3E50]">Smart Timeline & Audit Log</h1>
+                <p class="text-gray-500 text-sm">Trackable Project Management Tool</p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <select id="filterRole" class="border p-2 rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 ring-[#27AE60]">
-                    <option value="">All Roles</option>
-                    <option value="BE">BE</option><option value="FE">FE</option><option value="QA">QA</option><option value="Design">Design</option><option value="Mobile">Mobile</option>
-                </select>
-                <select id="filterStatus" class="border p-2 rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 ring-[#27AE60]"><option value="">All Status</option></select>
-                <select id="filterAssignee" class="border p-2 rounded-lg text-sm bg-gray-50 outline-none focus:ring-1 ring-[#27AE60]"><option value="">All Assignees</option></select>
+            <div class="flex gap-2">
+                <button onclick="scrollToToday()" class="bg-[#2C3E50] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700 transition shadow-md">Jump to Today</button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
+    <main class="max-w-[1600px] mx-auto grid grid-cols-1 xl:grid-cols-4 gap-6">
         
-        <div class="lg:col-span-1 space-y-6">
-            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 text-xs uppercase text-gray-400 tracking-wider">System Settings</h2>
+        <div class="xl:col-span-1 space-y-6">
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="font-bold mb-4 text-xs uppercase text-gray-400">Settings</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold mb-1">Public Holidays (YYYY-MM-DD)</label>
-                        <textarea id="holidaysInput" placeholder="2026-04-13, 2026-05-01" class="w-full border p-2 rounded-lg text-xs h-14 outline-none focus:border-[#27AE60]"></textarea>
+                        <label class="block text-[10px] font-bold mb-1">Public Holidays</label>
+                        <textarea id="holidaysInput" placeholder="2026-04-13, 2026-05-01" class="w-full border p-2 rounded-lg text-xs h-12 outline-none focus:border-[#27AE60]"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold mb-1 text-emerald-600">Number of QAs in Team</label>
-                        <input type="number" id="numQAs" value="1" min="1" class="w-full border p-2 rounded-lg text-sm focus:border-[#27AE60] outline-none" placeholder="How many QAs?">
+                        <label class="block text-[10px] font-bold mb-1">Team QAs</label>
+                        <input type="number" id="numQAs" value="1" min="1" class="w-full border p-2 rounded-lg text-xs outline-none">
                     </div>
-                    <hr>
                     <div>
-                        <label class="block text-xs font-semibold mb-1">Resources & Status</label>
-                        <div class="flex gap-1 mb-2">
-                            <input type="text" id="newAssignee" class="flex-1 border p-1 rounded text-xs" placeholder="+ Assignee">
-                            <button onclick="addItem('assignees', 'newAssignee')" class="bg-[#2C3E50] text-white px-2 rounded text-xs">+</button>
+                        <label class="block text-[10px] font-bold mb-1">Assignees</label>
+                        <div id="assigneeList" class="flex flex-wrap gap-1 mb-2"></div>
+                        <div class="flex gap-1">
+                            <input type="text" id="newAssignee" class="flex-1 border p-1 rounded text-xs" placeholder="+ Add Person">
+                            <button onclick="addItem('assignees', 'newAssignee')" class="bg-primary text-white px-2 rounded">+</button>
                         </div>
-                        <div id="assigneeList" class="flex flex-wrap gap-1 mb-3"></div>
-                        <div class="flex gap-1 mb-2">
-                            <input type="text" id="newStatus" class="flex-1 border p-1 rounded text-xs" placeholder="+ Status">
-                            <button onclick="addItem('statuses', 'newStatus')" class="bg-[#2C3E50] text-white px-2 rounded text-xs">+</button>
-                        </div>
-                        <div id="statusList" class="flex flex-wrap gap-1"></div>
                     </div>
                 </div>
             </section>
 
-            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 sticky top-4">
                 <h2 id="formTitle" class="font-bold mb-4 text-[#2C3E50]">Create Task</h2>
                 <input type="hidden" id="editingId" value="">
                 <div class="space-y-3">
@@ -82,28 +75,36 @@
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <div><label class="text-[10px] text-gray-400">START</label><input type="date" id="startDate" class="w-full border p-1 rounded text-xs"></div>
-                        <div><label class="text-[10px] text-gray-400">DEADLINE</label><input type="date" id="deadline" class="w-full border p-1 rounded text-xs"></div>
+                        <input type="date" id="startDate" class="border p-1 rounded text-xs outline-none">
+                        <input type="date" id="deadline" class="border p-1 rounded text-xs outline-none">
                     </div>
-                    <input type="number" id="mandays" placeholder="Mandays" class="w-full border p-2 rounded-lg text-sm">
-                    <select id="taskStatus" class="w-full border p-2 rounded-lg text-sm outline-none"></select>
+                    <input type="number" id="mandays" placeholder="Working Mandays" class="w-full border p-2 rounded-lg text-sm">
+                    <select id="taskStatus" class="border p-2 rounded-lg text-sm w-full outline-none"></select>
+                    <textarea id="taskNotes" placeholder="Notes (Optional)" class="w-full border p-2 rounded-lg text-xs h-16 outline-none focus:border-[#27AE60]"></textarea>
                     
-                    <div class="space-y-2 pt-2">
-                        <button onclick="handleTaskSubmit()" id="submitBtn" class="w-full bg-[#27AE60] text-white py-2 rounded-lg font-semibold shadow-md hover:bg-emerald-700 transition">Add Task</button>
-                        <button onclick="resetForm()" id="cancelBtn" class="w-full bg-gray-100 text-gray-500 py-2 rounded-lg text-sm hidden">Cancel Edit</button>
+                    <div id="reasonSection" class="hidden animate-pulse">
+                        <label class="text-[10px] font-bold text-red-500 uppercase">Reason for Timeline Change *</label>
+                        <textarea id="changeReason" placeholder="Why is the timeline moving?" class="w-full border-2 border-red-200 p-2 rounded-lg text-xs h-16 outline-none focus:border-red-500"></textarea>
                     </div>
+
+                    <button onclick="handleTaskSubmit()" id="submitBtn" class="w-full bg-[#27AE60] text-white py-2 rounded-lg font-bold shadow-md hover:opacity-90">Add Task</button>
+                    <button onclick="resetForm()" id="cancelBtn" class="w-full bg-gray-100 text-gray-500 py-1 rounded text-xs hidden">Cancel Edit</button>
                 </div>
             </section>
         </div>
 
-        <div class="lg:col-span-3 space-y-6">
-            <div id="qaSuggestionBox" class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 hidden">
-                <div class="flex items-center gap-3">
-                    <div class="bg-emerald-500 text-white p-2 rounded-lg">💡</div>
-                    <div>
-                        <h4 class="text-emerald-800 font-bold text-sm">QA Allocation Insight</h4>
-                        <p id="qaSuggestionText" class="text-emerald-700 text-xs"></p>
-                    </div>
+        <div class="xl:col-span-3 space-y-6">
+            <div id="qaSuggestionBox" class="bg-emerald-50 p-4 rounded-xl border border-emerald-100 hidden flex items-center gap-3">
+                <span class="text-lg">💡</span>
+                <p id="qaSuggestionText" class="text-emerald-800 text-xs font-medium"></p>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h2 class="font-bold mb-3 text-sm text-primary">Yearly Visual Gantt (2026)</h2>
+                <div class="gantt-container" id="ganttContainer">
+                    <div id="ganttHeaderMonths" class="flex" style="width: max-content;"></div>
+                    <div id="ganttHeaderDays" class="gantt-grid"></div>
+                    <div id="ganttRows" class="space-y-0.5 mt-1 pb-4"></div>
                 </div>
             </div>
 
@@ -111,82 +112,71 @@
                 <table class="w-full text-left text-xs">
                     <thead class="bg-[#2C3E50] text-white">
                         <tr>
-                            <th class="p-4 w-12">Order</th>
-                            <th class="p-4">Task Detail</th>
-                            <th class="p-4 text-center">Dates</th>
-                            <th class="p-4 text-center">Mandays</th>
-                            <th class="p-4 text-center">Status</th>
-                            <th class="p-4 text-right">Actions</th>
+                            <th class="p-3 w-10 text-center">#</th>
+                            <th class="p-3">Task Information</th>
+                            <th class="p-3">Timeline</th>
+                            <th class="p-3 text-center">Mandays</th>
+                            <th class="p-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="taskBody" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
-
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="font-bold mb-4 text-[#2C3E50] flex justify-between items-center text-sm">
-                    Visual Timeline (Next 30 Days)
-                    <div class="flex gap-4 font-normal text-[10px] text-gray-400">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-[#27AE60] rounded"></span> Dev/Task</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 bg-red-200 rounded"></span> Holiday</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 border border-slate-700 rounded"></span> Today</span>
-                    </div>
-                </h2>
-                <div id="ganttHeader" class="gantt-grid mb-1"></div>
-                <div id="ganttChart" class="space-y-1"></div>
-            </div>
         </div>
     </main>
 
-    <script>
-        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
-        let assignees = JSON.parse(localStorage.getItem('assignees')) || ['Default'];
-        let statuses = JSON.parse(localStorage.getItem('statuses')) || ['In Progress', 'Ongoing', 'Complete'];
-        let holidays = JSON.parse(localStorage.getItem('holidays')) || [];
+    <div id="historyModal" class="modal flex items-center justify-center">
+        <div class="bg-white p-6 rounded-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="font-bold text-lg text-primary">Change History</h3>
+                <button onclick="closeModal()" class="text-gray-400 text-2xl hover:text-red-500">&times;</button>
+            </div>
+            <div id="historyContent" class="space-y-4"></div>
+        </div>
+    </div>
 
-        function saveAndRender() {
+    <script>
+        const year = 2026;
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let assignees = JSON.parse(localStorage.getItem('assignees')) || ['Manager'];
+        let statuses = JSON.parse(localStorage.getItem('statuses')) || ['To Do', 'In Progress', 'Complete'];
+        let holidays = [];
+
+        function getDaysInYear(y) {
+            let dates = [];
+            let d = new Date(y, 0, 1);
+            while (d.getFullYear() === y) { dates.push(new Date(d)); d.setDate(d.getDate() + 1); }
+            return dates;
+        }
+        const yearDates = getDaysInYear(year);
+
+        function save() {
             localStorage.setItem('tasks', JSON.stringify(tasks));
             localStorage.setItem('assignees', JSON.stringify(assignees));
-            localStorage.setItem('statuses', JSON.stringify(statuses));
-            localStorage.setItem('holidays', JSON.stringify(holidays));
             render();
         }
 
-        // Logic: Working Day Calculation
-        function isWorkingDay(date, holidayList) {
-            const day = date.getDay();
-            const dateStr = date.toISOString().split('T')[0];
-            return day !== 0 && day !== 6 && !holidayList.includes(dateStr);
-        }
-
-        function calculateEndDate(startStr, mandays, holidayList) {
+        function calculateEndDate(startStr, mandays, hList) {
             let date = new Date(startStr);
             let count = 0;
             while (count < mandays) {
-                if (isWorkingDay(date, holidayList)) count++;
+                const day = date.getDay();
+                const dStr = date.toISOString().split('T')[0];
+                if (day !== 0 && day !== 6 && !hList.includes(dStr)) count++;
                 if (count < mandays) date.setDate(date.getDate() + 1);
             }
             return date;
         }
 
-        // Sidebar Add/Remove
-        function addItem(type, inputId) {
-            const val = document.getElementById(inputId).value.trim();
-            if(!val) return;
-            if(type === 'assignees') assignees.push(val);
-            else statuses.push(val);
-            document.getElementById(inputId).value = '';
-            saveAndRender();
-        }
-        function removeItem(type, idx) {
-            if(type === 'assignees') assignees.splice(idx, 1);
-            else statuses.splice(idx, 1);
-            saveAndRender();
+        function addItem(type, id) {
+            const val = document.getElementById(id).value.trim();
+            if(val) { assignees.push(val); document.getElementById(id).value = ''; save(); }
         }
 
-        // Task Form Handlers
         function handleTaskSubmit() {
             const editId = document.getElementById('editingId').value;
+            const holidays = document.getElementById('holidaysInput').value.split(',').map(d => d.trim());
+            
             const taskData = {
                 id: editId ? parseInt(editId) : Date.now(),
                 name: document.getElementById('taskName').value,
@@ -195,17 +185,39 @@
                 start: document.getElementById('startDate').value,
                 mandays: parseInt(document.getElementById('mandays').value),
                 deadline: document.getElementById('deadline').value,
-                status: document.getElementById('taskStatus').value
+                status: document.getElementById('taskStatus').value,
+                notes: document.getElementById('taskNotes').value,
+                history: editId ? tasks.find(x => x.id === parseInt(editId)).history || [] : []
             };
-            if(!taskData.name || !taskData.start || !taskData.mandays) return alert('กรุณากรอกข้อมูลสำคัญ');
+
+            if(!taskData.name || !taskData.start || !taskData.mandays) return alert("Please fill required fields");
 
             if(editId) {
-                const idx = tasks.findIndex(t => t.id === parseInt(editId));
-                tasks[idx] = taskData;
+                const original = tasks.find(x => x.id === parseInt(editId));
+                const endOriginal = calculateEndDate(original.start, original.mandays, holidays).toISOString().split('T')[0];
+                const endNew = calculateEndDate(taskData.start, taskData.mandays, holidays).toISOString().split('T')[0];
+
+                // Detect Timeline Shift
+                if (original.start !== taskData.start || original.mandays !== taskData.mandays || original.deadline !== taskData.deadline) {
+                    const reason = document.getElementById('changeReason').value.trim();
+                    if (!reason) {
+                        document.getElementById('reasonSection').classList.remove('hidden');
+                        alert("Timeline changed. Please provide a reason for the shift.");
+                        return;
+                    }
+                    taskData.history.push({
+                        timestamp: new Date().toLocaleString(),
+                        from: `Start: ${original.start}, Days: ${original.mandays}, End: ${endOriginal}`,
+                        to: `Start: ${taskData.start}, Days: ${taskData.mandays}, End: ${endNew}`,
+                        reason: reason
+                    });
+                }
+                tasks[tasks.findIndex(x => x.id === parseInt(editId))] = taskData;
             } else {
                 tasks.push(taskData);
             }
-            resetForm(); saveAndRender();
+            
+            resetForm(); save();
         }
 
         function editTask(id) {
@@ -218,132 +230,143 @@
             document.getElementById('deadline').value = t.deadline || '';
             document.getElementById('mandays').value = t.mandays;
             document.getElementById('taskStatus').value = t.status;
-
-            document.getElementById('formTitle').innerText = "Update Task";
-            document.getElementById('submitBtn').innerText = "Save Changes";
+            document.getElementById('taskNotes').value = t.notes || '';
+            
+            document.getElementById('submitBtn').innerText = "Update Task";
             document.getElementById('cancelBtn').classList.remove('hidden');
+            document.getElementById('reasonSection').classList.add('hidden');
+            document.getElementById('changeReason').value = "";
         }
 
         function resetForm() {
             document.getElementById('editingId').value = "";
             document.getElementById('taskName').value = "";
-            document.getElementById('formTitle').innerText = "Create Task";
+            document.getElementById('mandays').value = "";
+            document.getElementById('taskNotes').value = "";
+            document.getElementById('changeReason').value = "";
             document.getElementById('submitBtn').innerText = "Add Task";
             document.getElementById('cancelBtn').classList.add('hidden');
+            document.getElementById('reasonSection').classList.add('hidden');
         }
 
-        function moveTask(idx, dir) {
-            if(dir === 'up' && idx > 0) [tasks[idx], tasks[idx-1]] = [tasks[idx-1], tasks[idx]];
-            if(dir === 'down' && idx < tasks.length-1) [tasks[idx], tasks[idx+1]] = [tasks[idx+1], tasks[idx]];
-            saveAndRender();
+        function showHistory(id) {
+            const t = tasks.find(x => x.id === id);
+            const content = document.getElementById('historyContent');
+            if (!t.history || t.history.length === 0) {
+                content.innerHTML = "<p class='text-gray-400 text-center py-8 italic'>No changes tracked yet.</p>";
+            } else {
+                content.innerHTML = t.history.map(h => `
+                    <div class="border-l-4 border-accent bg-gray-50 p-4 rounded-r-lg">
+                        <div class="text-[10px] text-gray-400 font-bold mb-1">${h.timestamp}</div>
+                        <div class="grid grid-cols-2 gap-4 text-xs mb-2">
+                            <div class="text-red-400"><span class="font-bold uppercase">From:</span> ${h.from}</div>
+                            <div class="text-emerald-600"><span class="font-bold uppercase">To:</span> ${h.to}</div>
+                        </div>
+                        <div class="text-sm italic text-gray-700">"${h.reason}"</div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('historyModal').style.display = 'flex';
         }
 
-        // Render Page
+        function closeModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+        function scrollToToday() {
+            const todayCell = document.querySelector('.today-cell');
+            if(todayCell) todayCell.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+        }
+
         function render() {
             const hInput = document.getElementById('holidaysInput').value;
-            holidays = hInput.split(',').map(d => d.trim()).filter(d => d);
-            const nQAs = parseInt(document.getElementById('numQAs').value) || 1;
+            const holidayList = hInput.split(',').map(d => d.trim());
+            const todayStr = new Date().toISOString().split('T')[0];
 
-            // Sync Inputs
-            const syncDropdown = (id, list) => {
+            // Setup Selects
+            const sync = (id, list) => {
                 const el = document.getElementById(id);
                 const cur = el.value;
-                el.innerHTML = list.map(i => `<option value="${i}">${i}</option>`).join('');
+                el.innerHTML = list.map(v => `<option value="${v}">${v}</option>`).join('');
                 if(list.includes(cur)) el.value = cur;
             };
-            syncDropdown('taskAssignee', assignees);
-            syncDropdown('taskStatus', statuses);
-            syncDropdown('filterAssignee', ["", ...assignees]);
-            syncDropdown('filterStatus', ["", ...statuses]);
+            sync('taskAssignee', assignees);
+            sync('taskStatus', statuses);
 
-            // Render Manage Tags
-            const tagBox = (id, list, type) => {
-                document.getElementById(id).innerHTML = list.map((v, i) => `
-                    <span class="bg-gray-100 text-[10px] px-2 py-1 rounded flex items-center gap-1">${v} 
-                    <button onclick="removeItem('${type}', ${i})" class="text-red-400">×</button></span>`).join('');
-            };
-            tagBox('assigneeList', assignees, 'assignees');
-            tagBox('statusList', statuses, 'statuses');
+            document.getElementById('assigneeList').innerHTML = assignees.map((a,i) => `
+                <span class="bg-gray-100 text-[9px] px-2 py-1 rounded flex items-center gap-1">${a} 
+                <button onclick="assignees.splice(${i},1);save()" class="text-red-400">×</button></span>`).join('');
 
-            // --- QA SUGGESTION LOGIC ---
-            const devMandays = tasks.filter(t => ['BE', 'FE', 'Mobile'].includes(t.role)).reduce((s, t) => s + (t.mandays || 0), 0);
-            const qaBox = document.getElementById('qaSuggestionBox');
-            if(devMandays > 0) {
-                qaBox.classList.remove('hidden');
-                const suggestedQA = ((devMandays / nQAs) * 0.3).toFixed(1);
-                document.getElementById('qaSuggestionText').innerHTML = `Total Dev Mandays: <b>${devMandays}</b>. For <b>${nQAs} QA(s)</b>, suggested test duration is approx <b>${suggestedQA} working days</b> per QA.`;
-            } else { qaBox.classList.add('hidden'); }
-
-            // Table & Gantt
-            const body = document.getElementById('taskBody');
-            const chart = document.getElementById('ganttChart');
-            const head = document.getElementById('ganttHeader');
-            body.innerHTML = ''; chart.innerHTML = ''; head.innerHTML = '';
-
-            const today = new Date().toISOString().split('T')[0];
-            const startView = new Date(); startView.setDate(startView.getDate() - 3);
-
-            // Gantt Header
-            for(let i=0; i<31; i++) {
-                const d = new Date(startView); d.setDate(d.getDate() + i);
-                const dStr = d.toISOString().split('T')[0];
-                const isToday = dStr === today;
-                head.innerHTML += `
-                    <div class="day-cell ${d.getDay()===0||d.getDay()===6?'weekend':''} ${holidays.includes(dStr)?'holiday-cell':''} ${isToday?'today-cell':''}">
-                        ${isToday?'<div class="today-marker"></div>':''} ${d.getDate()}/${d.getMonth()+1}
-                    </div>`;
+            // QA Suggestion
+            const devDays = tasks.filter(t => ['BE','FE','Mobile'].includes(t.role)).reduce((s,t) => s + (t.mandays||0), 0);
+            const nQA = parseInt(document.getElementById('numQAs').value) || 1;
+            if(devDays > 0) {
+                document.getElementById('qaSuggestionBox').classList.remove('hidden');
+                document.getElementById('qaSuggestionText').innerText = `QA Planning: Total Dev Days (${devDays}) with ${nQA} QA(s) → Suggested Test Buffer: ${((devDays/nQA)*0.3).toFixed(1)} days.`;
             }
 
-            // Task Rendering
-            const fRole = document.getElementById('filterRole').value;
-            const fAss = document.getElementById('filterAssignee').value;
-            const fStat = document.getElementById('filterStatus').value;
+            // Headers
+            const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            let mH = ''; let dH = ''; let curM = -1; let mDays = 0;
+            yearDates.forEach((d, i) => {
+                const dStr = d.toISOString().split('T')[0];
+                if (d.getMonth() !== curM) {
+                    if (curM !== -1) mH += `<div class="month-header" style="width: ${mDays * 28}px">${monthNames[curM]}</div>`;
+                    curM = d.getMonth(); mDays = 1;
+                } else { mDays++; }
+                if (i === yearDates.length - 1) mH += `<div class="month-header" style="width: ${mDays * 28}px">${monthNames[curM]}</div>`;
+                dH += `<div class="day-cell ${d.getDay()===0||d.getDay()===6?'weekend':''} ${holidayList.includes(dStr)?'holiday-cell':''} ${dStr===todayStr?'today-cell':''}">
+                        ${dStr===todayStr?'<div class="today-line"></div>':''} ${d.getDate()}</div>`;
+            });
+            document.getElementById('ganttHeaderMonths').innerHTML = mH;
+            document.getElementById('ganttHeaderDays').style.gridTemplateColumns = `repeat(${yearDates.length}, 28px)`;
+            document.getElementById('ganttHeaderDays').innerHTML = dH;
+
+            // Tasks
+            const body = document.getElementById('taskBody');
+            const chart = document.getElementById('ganttRows');
+            body.innerHTML = ''; chart.innerHTML = '';
 
             tasks.forEach((t, idx) => {
-                if((fRole && t.role !== fRole) || (fAss && t.assignee !== fAss) || (fStat && t.status !== fStat)) return;
-
-                const end = calculateEndDate(t.start, t.mandays, holidays);
-                const endStr = end.toISOString().split('T')[0];
-                const overdue = t.deadline && endStr > t.deadline;
+                const end = calculateEndDate(t.start, t.mandays, holidayList);
+                const endS = end.toISOString().split('T')[0];
+                const overdue = t.deadline && endS > t.deadline;
 
                 body.innerHTML += `
-                    <tr class="${overdue?'bg-red-50':''} hover:bg-gray-50">
-                        <td class="p-2 text-center">
-                            <div class="flex flex-col gap-0.5">
-                                <button onclick="moveTask(${idx},'up')" class="hover:text-emerald-600">▲</button>
-                                <button onclick="moveTask(${idx},'down')" class="hover:text-emerald-600">▼</button>
-                            </div>
+                    <tr class="${overdue?'bg-red-50':''}">
+                        <td class="p-3 text-center">
+                            <button onclick="[tasks[${idx}],tasks[${idx}-1]]=[tasks[${idx}-1],tasks[${idx}]];save()" class="block w-full text-[8px] hover:text-green-600">▲</button>
+                            <button onclick="[tasks[${idx}],tasks[${idx}+1]]=[tasks[${idx}+1],tasks[${idx}]];save()" class="block w-full text-[8px] hover:text-green-600">▼</button>
                         </td>
-                        <td class="p-4"><b>${t.name}</b><br><span class="text-gray-400 font-normal">${t.assignee} (${t.role})</span></td>
-                        <td class="p-4 text-center">${t.start}<br>${endStr}</td>
-                        <td class="p-4 text-center font-bold">${t.mandays}</td>
-                        <td class="p-4 text-center"><span class="bg-gray-100 p-1 px-2 rounded">${t.status}</span></td>
-                        <td class="p-4 text-right">
-                            <button onclick="editTask(${t.id})" class="text-blue-500 mr-2">Edit</button>
-                            <button onclick="tasks.splice(${idx},1);saveAndRender()" class="text-red-300">Del</button>
+                        <td class="p-3">
+                            <b>${t.name}</b><br><span class="text-gray-400">${t.assignee} (${t.role})</span>
+                            ${t.notes ? `<div class="text-[10px] text-gray-400 italic mt-1">Note: ${t.notes}</div>` : ''}
+                        </td>
+                        <td class="p-3 text-xs leading-tight">${t.start}<br>${endS}</td>
+                        <td class="p-3 text-center font-bold">${t.mandays}</td>
+                        <td class="p-3 text-right">
+                            <div class="flex gap-2 justify-end">
+                                <button onclick="showHistory(${t.id})" class="text-emerald-500 underline" title="History">Logs</button>
+                                <button onclick="editTask(${t.id})" class="text-blue-500">Edit</button>
+                                <button onclick="tasks.splice(${idx},1);save()" class="text-red-300">Del</button>
+                            </div>
                         </td>
                     </tr>`;
 
-                let ganttRow = `<div class="gantt-grid">`;
-                for(let i=0; i<31; i++) {
-                    const d = new Date(startView); d.setDate(d.getDate() + i);
-                    const dStr = d.toISOString().split('T')[0];
-                    const isTask = dStr >= t.start && dStr <= endStr;
-                    ganttRow += `
-                        <div class="day-cell ${dStr===today?'today-cell':''} ${holidays.includes(dStr)?'holiday-cell':''}">
-                            ${isTask?`<div class="w-full ${overdue?'bg-red-400':'bg-[#27AE60]'} task-bar"></div>`:''}
-                        </div>`;
-                }
-                chart.innerHTML += `<div class="flex items-center gap-2"><div class="w-24 text-[9px] truncate text-gray-400 font-medium">${t.name}</div><div class="flex-1">${ganttRow}</div></div></div>`;
+                let rH = `<div class="flex" style="width: max-content;">
+                    <div class="sticky-col font-bold text-gray-500 shadow-sm">${t.name}</div>
+                    <div class="gantt-grid" style="grid-template-columns: repeat(${yearDates.length}, 28px)">`;
+                yearDates.forEach(d => {
+                    const ds = d.toISOString().split('T')[0];
+                    rH += `<div class="day-cell ${d.getDay()===0||d.getDay()===6?'weekend':''} ${holidayList.includes(ds)?'holiday-cell':''} ${ds===todayStr?'today-cell':''}">
+                        ${ds>=t.start&&ds<=endS?`<div class="w-full ${overdue?'bg-red-400':'bg-accent'} task-bar"></div>`:''}
+                    </div>`;
+                });
+                chart.innerHTML += rH + `</div></div>`;
             });
         }
 
-        document.getElementById('numQAs').addEventListener('input', render);
-        document.getElementById('filterRole').addEventListener('change', render);
-        document.getElementById('filterAssignee').addEventListener('change', render);
-        document.getElementById('filterStatus').addEventListener('change', render);
-        document.getElementById('holidaysInput').addEventListener('input', render);
-        render();
+        window.onload = () => { render(); setTimeout(scrollToToday, 500); };
+        document.getElementById('numQAs').oninput = render;
+        document.getElementById('holidaysInput').oninput = render;
     </script>
 </body>
 </html>
